@@ -1,0 +1,56 @@
+{
+  "name": "bns-client-updater-launcher",
+  "version": "1.0.0",
+  "description": "A GUI updater for Blade & Soul client",
+  "author": "WAR100CK",
+  "main": "main.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder -w"
+  },
+  "build": {
+    "appId": "com.example.bnsupdater",
+    "productName": "Blade & Soul Launcher",
+    "asar": true,
+    "files": [
+      "**/*",
+      "!bin/**/*",
+      "!data/**/*",
+      "!temp/**/*",
+      "libs/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "lib/bin/elzma.exe",
+        "to": "bin/elzma.exe"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/images/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.0",
+    "bootstrap-icons": "^1.13.1",
+    "cross-env": "^7.0.3",
+    "ini": "^5.0.0",
+    "md5-file": "^5.0.0",
+    "sqlite3": "5.1.6"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Blade & Soul Updater</title>
+      <link rel="stylesheet" href="./libs/bootstrap/bootstrap.min.css">
+      <link rel="stylesheet" href="./libs/bootstrap-icons/bootstrap-icons.css">
+      <link rel="stylesheet" href="./css/styles.css">
+   </head>
+   <body>
+      <div class="app-container">
+         <div class="custom-titlebar">
+            <div class="titlebar-title">
+               <img src="../assets/images/logo/logo.webp" class="titlebar-logo">
+               <span>Blade & Soul Launcher</span>
+            </div>
+            <div class="titlebar-controls">
+               <button class="settings-btn" data-bs-toggle="modal" data-bs-target="#settingsModal">
+               <i class="bi bi-gear"></i>
+               </button>
+               <button class="titlebar-btn" onclick="ipcRenderer.send('minimize-window')">
+               <i class="bi bi-dash"></i>
+               </button>
+               <button class="titlebar-btn close" onclick="ipcRenderer.send('close-window')">
+               <i class="bi bi-x"></i>
+               </button>
+            </div>
+         </div>
+         <div class="main-content">
+            <div class="progress-section">
+               <div class="version-container">
+                  <div>
+                     <div id="new-version-info" class="new-version-info" style="display: none;">New version available: <strong><span id="new-version-number">Loading...</span></strong></div>
+                     <div id="version-info" class="version-info">Current version: <strong><span id="version-number">Loading...</span></strong></div>
+                  </div>
+                  <button id="play-btn" class="play-btn" disabled>
+                  <i class="bi bi-play-fill"></i> Play
+                  </button>
+               </div>
+               <div class="progress-container">
+                  <div class="progress-header">
+                     <h5 id="stage-title" class="mb-0" style="font-size: 16px;">Checking for updates...</h5>
+                     <div class="download-info" id="download-info">
+                        <div class="status-item">
+                           <span class="status-label">Downloaded:</span>
+                           <span id="downloaded" class="status-value">0 MB / 0 MB</span>
+                        </div>
+                        <div class="status-item">
+                           <span class="status-label">Speed:</span>
+                           <span id="speed" class="status-value">0 MB/s</span>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="progress">
+                     <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                  </div>
+                  <div id="current-file" class="current-file"></div>
+               </div>
+            </div>
+         </div>
+         <!-- Красивый тост с иконками -->
+         <div id="error-toast" class="toast position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 9999;">
+            <div class="toast-header">
+               <i id="toast-icon" class="bi me-2"></i>
+               <strong id="toast-title" class="me-auto"></strong>
+               <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="error-message"></div>
+         </div>
+      </div>
+      <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+         <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+               <div class="modal-header">
+                  <h5 class="modal-title">Updater Settings</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+               </div>
+               <div class="modal-body">
+                  <div class="d-flex gap-2">
+                     <button type="button" class="btn btn-outline-light w-30 ms-auto" id="check-files-btn">
+                     Check Files Integrity
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="./js/script.js"></script>
+   </body>
+</html>
