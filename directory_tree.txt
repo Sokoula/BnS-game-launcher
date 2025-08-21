@@ -1,0 +1,39 @@
+└── BnS-game-launcher
+    ├── README.md
+    ├── build-dist.bat
+    ├── install-and-build.bat
+    ├── install.bat
+    ├── lib
+    │   ├── bin
+    │   │   └── elzma.exe
+    │   ├── cab.js
+    │   ├── client.js
+    │   ├── database.js
+    │   └── version.js
+    ├── main.js
+    ├── package.json
+    ├── progress-events.js
+    ├── src
+    │   ├── assets
+    │   │   └── images
+    │   │       ├── icon.ico
+    │   │       ├── logo
+    │   │       │   └── logo.webp
+    │   │       └── slide
+    │   │           └── index.jpg
+    │   └── views
+    │       ├── css
+    │       │   └── styles.css
+    │       ├── index.html
+    │       ├── js
+    │       │   └── script.js
+    │       └── libs
+    │           ├── bootstrap
+    │           │   └── bootstrap.min.css
+    │           └── bootstrap-icons
+    │               ├── bootstrap-icons.css
+    │               └── fonts
+    │                   ├── bootstrap-icons.woff
+    │                   └── bootstrap-icons.woff2
+    ├── start-npm-dev.bat
+    └── updater-enhanced.js

@@ -21,10 +21,10 @@
       "libs/**/*"
     ],
     "extraResources": [
-      {
-        "from": "lib/bin/elzma.exe",
-        "to": "bin/elzma.exe"
-      }
+    {
+        "from": "lib/bin",
+        "to": "bin"
+    }
     ],
     "win": {
       "target": "nsis",

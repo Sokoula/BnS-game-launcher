@@ -123,18 +123,18 @@ function createWindow() {
 async function startUpdater(fullCheck) {
   try {
     const versionFilePath = path.join(
-      app.isPackaged ? process.cwd() : __dirname,
-      app.isPackaged ? "bin/Version.ini" : "bin/Version.ini"
-    );
+    app.isPackaged ? path.dirname(process.execPath) : __dirname,
+    "bin", "Version.ini"
+);
 
-    const updater = new BnSEnhancedUpdater({
-      clientDirectory: app.isPackaged ? process.cwd() : __dirname,
-      versionFile: versionFilePath,
-      tempDirectory: path.join(
-        app.isPackaged ? process.cwd() : __dirname,
-        app.isPackaged ? "temp" : "temp"
-      ),
-    });
+const updater = new BnSEnhancedUpdater({
+    clientDirectory: app.isPackaged ? path.dirname(process.execPath) : __dirname,
+    versionFile: versionFilePath,
+    tempDirectory: path.join(
+        app.isPackaged ? path.dirname(process.execPath) : __dirname,
+        "temp"
+    ),
+});
 
     // Читаем ProductVersion и Download.Version из Version.ini
     const versionIni = ini.parse(fs.readFileSync(versionFilePath, "utf-8"));
@@ -268,10 +268,11 @@ async function startUpdater(fullCheck) {
 // IPC обработчики
 ipcMain.on("manual-check", () => startUpdater(true));
 
+// Замени текущий обработчик "play-game" на этот код:
 ipcMain.on("play-game", () => {
   const gamePath = path.join(
-    app.isPackaged ? process.cwd() : __dirname,
-    app.isPackaged ? "bin/Client.exe" : "bin/Client.exe"
+    app.isPackaged ? path.dirname(process.execPath) : __dirname,
+    "bin", "Client.exe"
   );
 
   if (!fs.existsSync(gamePath)) {
@@ -283,20 +284,47 @@ ipcMain.on("play-game", () => {
   }
 
   const command = `"${gamePath}" /SessKey /LaunchByLauncher /LoginMode 2 /ProxyIP:192.168.0.114 -UnAttended`;
-  exec(command, { windowsHide: true }, (error) => {
+  
+  console.log("Launching game and preparing to exit...");
+  
+  const childProcess = exec(command, { windowsHide: true }, (error, stdout, stderr) => {
     if (error) {
       console.error("Failed to launch Client.exe:", error);
+      console.error("STDERR:", stderr);
       if (!isWindowDestroyed && mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send(
           "updater-error",
           `Failed to launch: ${error.message}`
         );
       }
+      // Не закрываем лаунчер при ошибке запуска игры
+      return;
+    }
+    
+    // Если игра запустилась успешно (нет ошибки), закрываем лаунчер
+    console.log("Client.exe launched successfully. Exiting launcher...");
+    app.quit();
+  });
+
+  // Дополнительная проверка: если процесс игры завершится с ошибкой быстро,
+  // мы также сможем это отследить
+  childProcess.on('exit', (code) => {
+    if (code !== 0) {
+      console.error(`Game process exited with error code: ${code}`);
+      // Не закрываем лаунчер при ошибке
     } else {
-      console.log("Client.exe launched successfully.");
+      console.log("Game process exited normally. Closing launcher...");
       app.quit();
     }
   });
+
+  // Таймаут: если игра запустилась и работает нормально, закрываем лаунчер через 3 секунды
+  setTimeout(() => {
+    if (!childProcess.killed) {
+      console.log("Game launched successfully (timeout check). Closing launcher...");
+      app.quit();
+    }
+  }, 3000);
 });
 
 // Инициализация приложения

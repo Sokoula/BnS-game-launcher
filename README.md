@@ -245,3 +245,30 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## About
 
 A modern launcher for Blade & Soul, integrating with a private patch server for seamless updates and a polished user experience.
+
+## Additions / Fixes
+<details>
+  <summary><b>Change Log: 21/08/2025</b></summary>
+
+ **Problem:**  
+The launcher was freezing during file extraction in the release version, while in dev mode it worked normally.
+
+## 🔎 Main Causes
+- Incorrect paths to `elzma.exe` in release mode  
+- Blocking calls with `spawnSync()` for extraction  
+- Incorrect update of `Version.ini` with duplicated `v v`  
+- Missing `bin` folder with files in the previous release  
+
+## 🔨 Fixes
+- **elzma.exe paths** – fixed path resolution for dev and release mode  
+- **Asynchronous extraction** – replaced `spawnSync` with `spawn` using `async/await`  
+- **Version.ini parsing** – fixed version extraction and updating  
+- **Error handling** – added logging and exception handling  
+- **bin folder** – added missing folder with files  
+
+## ✅ Result
+The launcher now works stably in both modes,  
+does not freeze during updates,  
+and correctly displays versions.
+
+</details>

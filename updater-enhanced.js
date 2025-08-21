@@ -9,34 +9,37 @@ const sqlite3 = require("sqlite3").verbose();
 const cab = require("./lib/cab");
 const md5File = require("md5-file");
 const progressEvents = require("./progress-events");
-const { app } = require("electron");
+const {
+    app
+} = require("electron");
 
 class BnSEnhancedUpdater {
     constructor(config = {}) {
+        // Определяем базовый путь в зависимости от режима
+        const basePath = app.isPackaged ? path.dirname(process.execPath) : __dirname;
+
         this.config = {
-            clientDirectory: app.isPackaged ? process.cwd() : __dirname,
+            clientDirectory: basePath,
             patchServerUrl: "http://192.168.0.114:3000/bns-patch",
-            versionFile: path.join(
-                app.isPackaged ? process.cwd() : __dirname,
-                app.isPackaged ? "bin/Version.ini" : "bin/Version.ini"
-            ),
-            tempDirectory: path.join(
-                app.isPackaged ? process.cwd() : __dirname,
-                app.isPackaged ? "temp" : "temp"
-            ),
+            versionFile: path.join(basePath, "bin", "Version.ini"),
+            tempDirectory: path.join(basePath, "temp"),
             maxRetries: 3,
             retryDelay: 1000,
             ...config
         };
 
         if (!fs.existsSync(this.config.tempDirectory)) {
-            fs.mkdirSync(this.config.tempDirectory, { recursive: true });
+            fs.mkdirSync(this.config.tempDirectory, {
+                recursive: true
+            });
         }
+
         console.log(`[Config] process.cwd(): ${process.cwd()}`);
         console.log(`[Config] clientDirectory: ${this.config.clientDirectory}`);
         console.log(`[Config] versionFile path: ${this.config.versionFile}`);
         console.log(`[Config] app.isPackaged: ${app.isPackaged}`);
         console.log(`[Config] __dirname: ${__dirname}`);
+        console.log(`[Config] basePath: ${basePath}`);
     }
 
     async checkForUpdates(fullCheck = false) {
@@ -57,11 +60,14 @@ class BnSEnhancedUpdater {
                 await new Promise(resolve => setTimeout(resolve, 3000));
             }
 
-            const { missingFiles, modifiedFiles } = await this.verifyClientFiles(allRequiredFiles);
+            const {
+                missingFiles,
+                modifiedFiles
+            } = await this.verifyClientFiles(allRequiredFiles);
 
             // Формируем уникальный список файлов для обновления
             const fileMap = new Map();
-            
+
             // Добавляем файлы для обновления версии, если требуется
             if (remoteVersionInfo.version > localVersion) {
                 const versionFiles = await this.getVersionUpdateFiles(localVersion, remoteVersionInfo.version);
@@ -125,7 +131,7 @@ class BnSEnhancedUpdater {
 
             try {
                 const localFile = path.join(this.config.clientDirectory, file.destination);
-                
+
                 if (!fs.existsSync(localFile)) {
                     missingFiles.push(file);
                     continue;
@@ -149,7 +155,10 @@ class BnSEnhancedUpdater {
         }
 
         progressEvents.emitVerificationComplete(missingFiles.length, modifiedFiles.length);
-        return { missingFiles, modifiedFiles };
+        return {
+            missingFiles,
+            modifiedFiles
+        };
     }
 
     async getAllRequiredFilesInfo(targetVersion) {
@@ -159,20 +168,25 @@ class BnSEnhancedUpdater {
         for (let version = 1; version <= targetVersion; version++) {
             const tempDbPath = path.join(this.config.tempDirectory, `server.db.${version}`);
             const tempDbCab = `${tempDbPath}.cab`;
-            
+
             try {
                 console.log(`\x1b[37m[Database] Downloading database version \x1b[33m${version}\x1b[37m...\x1b[0m`);
                 await this.downloadFile(`${this.config.patchServerUrl}/db/server.db.${version}.cab`, tempDbCab);
-                
+
                 console.log(`\x1b[37m[Database] Extracting database for version \x1b[33m${version}\x1b[37m...\x1b[0m`);
                 try {
-                    await cab.decompress(tempDbCab, { outputFile: tempDbPath });
+                    await cab.decompress(tempDbCab, {
+                        outputFile: tempDbPath
+                    });
                 } catch (error) {
                     console.error(`\x1b[31m[Database] Failed to decompress database for version ${version}: ${error.message}\x1b[0m`);
                     continue;
                 }
 
-                tempFiles.push({ tempDbPath, tempDbCab });
+                tempFiles.push({
+                    tempDbPath,
+                    tempDbCab
+                });
 
                 const db = new sqlite3.Database(tempDbPath);
                 try {
@@ -234,14 +248,16 @@ class BnSEnhancedUpdater {
         const files = [];
         const tempDbPath = path.join(this.config.tempDirectory, `server.db.${newVersion}`);
         const tempDbCab = `${tempDbPath}.cab`;
-        
+
         try {
             console.log(`\x1b[37m[Database] Downloading database version \x1b[33m${newVersion}\x1b[37m...\x1b[0m`);
             await this.downloadFile(`${this.config.patchServerUrl}/db/server.db.${newVersion}.cab`, tempDbCab);
-            
+
             console.log(`\x1b[37m[Database] Extracting database...\x1b[0m`);
             try {
-                await cab.decompress(tempDbCab, { outputFile: tempDbPath });
+                await cab.decompress(tempDbCab, {
+                    outputFile: tempDbPath
+                });
             } catch (error) {
                 console.error(`\x1b[31m[Database] Failed to decompress database for version ${newVersion}: ${error.message}\x1b[0m`);
                 throw error;
@@ -304,7 +320,7 @@ class BnSEnhancedUpdater {
 
             console.log(`\x1b[37m[Download] Downloading all update files...\x1b[0m`);
             const tempFiles = [];
-            
+
             let totalBytes = 0;
             let downloadedBytes = 0;
             let startTime = Date.now();
@@ -327,7 +343,7 @@ class BnSEnhancedUpdater {
                 const tempFile = path.join(this.config.tempDirectory, path.basename(file.url));
                 const statusMsg = `Downloading`;
                 console.log(`\x1b[37m[Download] ${statusMsg} (\x1b[33m${downloadedFiles}\x1b[37m / \x1b[33m${totalFiles}\x1b[37m): ${file.destination}\x1b[0m`);
-                
+
                 await this.downloadFile(file.url, tempFile, (bytesDownloaded, fileSize) => {
                     downloadedBytes += bytesDownloaded;
                     const currentTime = Date.now();
@@ -335,7 +351,7 @@ class BnSEnhancedUpdater {
                         const elapsedTime = (currentTime - startTime) / 1000;
                         const speed = elapsedTime > 0 ? downloadedBytes / elapsedTime : 0;
                         const percent = totalBytes > 0 ? Math.round((downloadedBytes / totalBytes) * 100) : 0;
-                        
+
                         progressEvents.emitDownloadProgress(
                             percent,
                             downloadedBytes,
@@ -365,7 +381,9 @@ class BnSEnhancedUpdater {
                 try {
                     const destinationDir = path.dirname(file.destination);
                     if (!fs.existsSync(destinationDir)) {
-                        fs.mkdirSync(destinationDir, { recursive: true });
+                        fs.mkdirSync(destinationDir, {
+                            recursive: true
+                        });
                     }
 
                     const displayPath = file.destination.replace(this.config.clientDirectory, '').replace(/^[\\/]/, '').replace(/\\/g, '/');
@@ -416,13 +434,15 @@ class BnSEnhancedUpdater {
             if (!updateInfo.isRepair && updateInfo.dbFile) {
                 const tempDbPath = path.join(this.config.tempDirectory, "server.db");
                 const tempDbCab = path.join(this.config.tempDirectory, path.basename(updateInfo.dbFile));
-                
+
                 await this.downloadFile(`${this.config.patchServerUrl}/${updateInfo.dbFile}`, tempDbCab);
-                await cab.decompress(tempDbCab, { outputFile: tempDbPath });
-                
+                await cab.decompress(tempDbCab, {
+                    outputFile: tempDbPath
+                });
+
                 if (fs.existsSync(tempDbPath)) fs.unlinkSync(tempDbPath);
                 if (fs.existsSync(tempDbCab)) fs.unlinkSync(tempDbCab);
-                
+
                 this.updateLocalVersion(updateInfo.newVersion);
             }
 
@@ -457,7 +477,7 @@ class BnSEnhancedUpdater {
         return new Promise((resolve, reject) => {
             const urlObj = new URL(url);
             const protocol = urlObj.protocol === 'https:' ? https : http;
-            
+
             protocol.get(url, (response) => {
                 if (response.statusCode !== 200) {
                     return reject(new Error(`Failed to get file size (Status: ${response.statusCode})`));
@@ -474,24 +494,24 @@ class BnSEnhancedUpdater {
             const urlObj = new URL(url);
             const protocol = urlObj.protocol === 'https:' ? https : http;
             const file = fs.createWriteStream(destination);
-            
+
             protocol.get(url, (response) => {
                 if (response.statusCode !== 200) {
                     file.close();
                     fs.unlinkSync(destination, () => {});
                     return reject(new Error(`Download failed (Status: ${response.statusCode})`));
                 }
-                
+
                 const totalBytes = parseInt(response.headers['content-length'], 10);
                 let downloadedBytes = 0;
-                
+
                 response.on('data', (chunk) => {
                     downloadedBytes += chunk.length;
                     if (progressCallback) {
                         progressCallback(chunk.length, totalBytes);
                     }
                 });
-                
+
                 response.pipe(file);
                 file.on('finish', () => {
                     file.close(resolve);
@@ -538,7 +558,7 @@ class BnSEnhancedUpdater {
     async getRemoteVersionInfo() {
         const url = `${this.config.patchServerUrl}/Version.ini`;
         console.log(`[VersionCheck] Downloading Version.ini from server: ${url}`);
-        
+
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -560,18 +580,18 @@ class BnSEnhancedUpdater {
     updateLocalVersion(newVersion) {
         try {
             const versionData = ini.decode(fs.readFileSync(this.config.versionFile, "utf-8"));
-            
+
             if (versionData.Version && versionData.Version.ProductVersion) {
                 const currentProductVersion = versionData.Version.ProductVersion.split(' v ')[0];
                 versionData.Version.ProductVersion = `${currentProductVersion} v ${newVersion}`;
             }
-            
+
             versionData.Download.Version = newVersion.toString();
             versionData.Download["DB file"] = `db/server.db.${newVersion}.cab`;
-            
+
             fs.writeFileSync(this.config.versionFile, ini.encode(versionData));
             console.log(`\x1b[37m[VersionUpdate] Version.ini updated successfully\x1b[0m`);
-            
+
             const updatedData = ini.decode(fs.readFileSync(this.config.versionFile, "utf-8"));
             console.log(`\x1b[37m[VersionUpdate] Version verification:\x1b[0m`);
             console.log(`\x1b[37m- ProductVersion: ${updatedData.Version?.ProductVersion || 'N/A'}\x1b[0m`);
@@ -615,17 +635,20 @@ if (require.main === module) {
     if (process.send) {
         const originalEmit = progressEvents.emit;
         progressEvents.emit = function(event, ...args) {
-            process.send({ type: event, data: args[0] });
+            process.send({
+                type: event,
+                data: args[0]
+            });
             originalEmit.apply(progressEvents, [event, ...args]);
         };
 
         process.on('uncaughtException', (err) => {
-            process.send({ 
-                type: 'error', 
-                data: { 
-                    stage: 'uncaught', 
-                    error: err.message 
-                } 
+            process.send({
+                type: 'error',
+                data: {
+                    stage: 'uncaught',
+                    error: err.message
+                }
             });
         });
     }
@@ -634,7 +657,7 @@ if (require.main === module) {
         try {
             const updater = new BnSEnhancedUpdater();
             const updateInfo = await updater.checkForUpdates();
-            
+
             if (updateInfo.updateAvailable) {
                 await updater.applyUpdates(updateInfo);
             }
